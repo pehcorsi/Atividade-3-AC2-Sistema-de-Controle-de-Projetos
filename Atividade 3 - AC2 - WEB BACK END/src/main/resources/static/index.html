@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Controle de Projetos</title>
+  <style>
+    :root {
+      --bg: #faf6f0;
+      --card: #fffdf9;
+      --ink: #2b2118;
+      --muted: #7a6b5d;
+      --line: #e8dfd3;
+      --accent: #c8553d;
+      --accent-dark: #a8412c;
+      --teal: #2f4858;
+      --ok-bg: #e4efe6;
+      --ok-ink: #2d5a3a;
+      --err-bg: #f8e1dc;
+      --err-ink: #8c2f1c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+    .topo {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 20px 8px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .logo {
+      width: 38px; height: 38px;
+      background: var(--accent);
+      border-radius: 10px 10px 10px 2px;
+      display: grid; place-items: center;
+      color: #fff; font-family: Georgia, serif; font-size: 22px; font-weight: bold;
+    }
+    .topo h1 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 26px; }
+    .topo p { margin: 0; color: var(--muted); font-size: 14px; }
+
+    .app {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 16px 20px 48px;
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 28px;
+      align-items: start;
+    }
+    @media (max-width: 800px) { .app { grid-template-columns: 1fr; } }
+
+    .painel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 22px;
+      position: sticky;
+      top: 16px;
+    }
+    @media (max-width: 800px) { .painel { position: static; } }
+    .painel h2, .lista-topo h2 {
+      margin: 0 0 16px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 20px;
+    }
+
+    .campo { display: block; margin-bottom: 18px; }
+    .campo span {
+      display: block;
+      font-size: 12px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+    .campo input {
+      width: 100%;
+      padding: 8px 2px;
+      border: 0;
+      border-bottom: 2px solid var(--line);
+      background: transparent;
+      font: inherit;
+      color: var(--ink);
+      border-radius: 0;
+    }
+    .campo input:focus { outline: none; border-bottom-color: var(--accent); }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border: 0;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #fff;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    button:hover { background: var(--accent-dark); }
+
+    .aviso {
+      display: none;
+      padding: 10px 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+    .aviso.erro { display: block; background: var(--err-bg); color: var(--err-ink); }
+    .aviso.ok { display: block; background: var(--ok-bg); color: var(--ok-ink); }
+    .aviso ul { margin: 0; padding-left: 18px; }
+
+    .lista-topo { display: flex; justify-content: space-between; align-items: baseline; }
+    .contador { color: var(--muted); font-size: 14px; }
+
+    .cards { display: grid; gap: 14px; }
+    .projeto {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--accent);
+      border-radius: 12px;
+      padding: 16px 18px;
+    }
+    .projeto.encerrado { border-left-color: var(--teal); }
+    .projeto.agendado { border-left-color: #d9a441; }
+    .projeto-cabeca { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+    .projeto h3 { margin: 0; font-size: 17px; }
+    .id { color: var(--muted); font-size: 13px; font-weight: normal; margin-right: 6px; }
+    .selo {
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: #f6e3de;
+      color: var(--accent-dark);
+      white-space: nowrap;
+    }
+    .encerrado .selo { background: #dde6eb; color: var(--teal); }
+    .agendado .selo { background: #f8ecd0; color: #8a6414; }
+    .periodo { margin: 8px 0 12px; color: var(--muted); font-size: 14px; }
+    .equipe { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip {
+      font-size: 13px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: #f1ebe2;
+    }
+    .chip.vazio { background: transparent; color: var(--muted); padding-left: 0; font-style: italic; }
+
+    .sem-projetos {
+      display: none;
+      text-align: center;
+      color: var(--muted);
+      padding: 40px 0;
+      border: 2px dashed var(--line);
+      border-radius: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="topo">
+    <div class="logo">P</div>
+    <div>
+      <h1>Controle de Projetos</h1>
+      <p>Cadastre projetos e acompanhe a equipe de cada um</p>
+    </div>
+  </div>
+
+  <div class="app">
+    <aside class="painel">
+      <h2>Novo projeto</h2>
+      <div id="aviso" class="aviso"></div>
+      <form id="form-projeto">
+        <label class="campo">
+          <span>Descrição</span>
+          <input type="text" id="descricao" maxlength="200" placeholder="Ex.: Sistema de vendas">
+        </label>
+        <label class="campo">
+          <span>Data de início</span>
+          <input type="date" id="dataInicio">
+        </label>
+        <label class="campo">
+          <span>Data de fim (opcional)</span>
+          <input type="date" id="dataFim">
+        </label>
+        <button type="submit">Salvar projeto</button>
+      </form>
+    </aside>
+
+    <section>
+      <div class="lista-topo">
+        <h2>Projetos cadastrados</h2>
+        <span class="contador" id="contador"></span>
+      </div>
+      <div id="cards" class="cards"></div>
+      <div id="sem-projetos" class="sem-projetos">Nenhum projeto cadastrado ainda.</div>
+    </section>
+  </div>
+
+  <script>
+    const API = '/api/projetos';
+    const aviso = document.getElementById('aviso');
+
+    // yyyy-MM-dd -> dd/MM/yyyy (sem passar por Date, para evitar deslocamento de fuso)
+    function formatarData(iso) {
+      if (!iso) return 'sem data de fim';
+      const [a, m, d] = iso.split('-');
+      return `${d}/${m}/${a}`;
+    }
+
+    function hojeISO() {
+      const d = new Date();
+      const p = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    }
+
+    // datas no formato yyyy-MM-dd podem ser comparadas como texto
+    function situacao(p) {
+      const hoje = hojeISO();
+      if (p.dataInicio > hoje) return { classe: 'agendado', texto: 'Agendado' };
+      if (p.dataFim && p.dataFim < hoje) return { classe: 'encerrado', texto: 'Encerrado' };
+      return { classe: '', texto: 'Em andamento' };
+    }
+
+    function mostrarErros(erros) {
+      aviso.className = 'aviso erro';
+      aviso.replaceChildren();
+      const ul = document.createElement('ul');
+      erros.forEach(e => {
+        const li = document.createElement('li');
+        li.textContent = e;           // textContent: não interpreta HTML vindo do servidor
+        ul.appendChild(li);
+      });
+      aviso.appendChild(ul);
+    }
+
+    function mostrarSucesso(texto) {
+      aviso.className = 'aviso ok';
+      aviso.textContent = texto;
+    }
+
+    function criar(tag, classe, texto) {
+      const el = document.createElement(tag);
+      if (classe) el.className = classe;
+      if (texto !== undefined) el.textContent = texto;
+      return el;
+    }
+
+    async function listarProjetos() {
+      const cards = document.getElementById('cards');
+      const vazio = document.getElementById('sem-projetos');
+      const contador = document.getElementById('contador');
+      try {
+        const resp = await fetch(API);
+        if (!resp.ok) throw new Error();
+        const projetos = await resp.json();
+
+        cards.replaceChildren();
+        vazio.style.display = projetos.length ? 'none' : 'block';
+        contador.textContent = projetos.length === 1 ? '1 projeto' : `${projetos.length} projetos`;
+
+        projetos.forEach(p => {
+          const sit = situacao(p);
+          const card = criar('article', `projeto ${sit.classe}`);
+
+          const cabeca = criar('div', 'projeto-cabeca');
+          const titulo = criar('h3');
+          titulo.appendChild(criar('span', 'id', `#${p.id}`));
+          titulo.appendChild(document.createTextNode(p.descricao));
+          cabeca.appendChild(titulo);
+          cabeca.appendChild(criar('span', 'selo', sit.texto));
+          card.appendChild(cabeca);
+
+          card.appendChild(criar('p', 'periodo',
+            `${formatarData(p.dataInicio)}  →  ${formatarData(p.dataFim)}`));
+
+          const equipe = criar('div', 'equipe');
+          if (p.funcionarios.length === 0) {
+            equipe.appendChild(criar('span', 'chip vazio', 'Nenhum funcionário vinculado'));
+          } else {
+            p.funcionarios.forEach(f => equipe.appendChild(criar('span', 'chip', f.nome)));
+          }
+          card.appendChild(equipe);
+
+          cards.appendChild(card);
+        });
+      } catch (e) {
+        mostrarErros(['Não foi possível carregar a lista de projetos.']);
+      }
+    }
+
+    document.getElementById('form-projeto').addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      aviso.className = 'aviso';
+
+      const corpo = {
+        descricao: document.getElementById('descricao').value,
+        dataInicio: document.getElementById('dataInicio').value || null,
+        dataFim: document.getElementById('dataFim').value || null
+      };
+
+      try {
+        const resp = await fetch(API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(corpo)
+        });
+
+        if (resp.ok) {
+          ev.target.reset();
+          mostrarSucesso('Projeto cadastrado com sucesso!');
+          listarProjetos();
+        } else {
+          // erros de validação vêm do back como { "errors": [...] }
+          const json = await resp.json().catch(() => null);
+          mostrarErros(json && json.errors ? json.errors : ['Erro inesperado ao salvar o projeto.']);
+        }
+      } catch (e) {
+        mostrarErros(['Não foi possível conectar ao servidor.']);
+      }
+    });
+
+    listarProjetos();
+  </script>
+</body>
+</html>
